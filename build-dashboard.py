@@ -1,5 +1,7 @@
 import requests, json, os
 from datetime import datetime, date
+from html.parser import HTMLParser
+
 from local_config import *
 
 """
@@ -8,6 +10,34 @@ pp_password = os.environ['PP_PASSWORD']
 ar_username = os.environ['AR_USERNAME']
 ar_username = os.environ['AR_PASSWORD']
 """
+
+class ArHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.recording = 0
+        self.data = None
+
+    def handle_starttag(self, tag, attributes):
+        if tag != 'span':
+            return
+        if self.recording:
+            self.recording += 1
+            return
+        for name, value in attributes:
+            if name == 'id' and value == 'ctl00_ContentPlaceHolder_Content_mBox_Progress_mSpan_Points':
+                break
+            else:
+                return
+        
+        self.recording = 1
+
+    def handle_endtag(self, tag):
+        if tag == 'span' and self.recording:
+            self.recording -= 1
+
+    def handle_data(self, data):
+        if self.recording:
+            self.data = data
 
 # Get Plus Portals Assignments
 def get_assignments():
@@ -27,6 +57,7 @@ def get_assignments():
     
     return assignments
 
+# Get a short summary (for top of email)
 def get_assignments_summary(data=None):
     assignments_summary = []
     for x in data:
@@ -34,6 +65,7 @@ def get_assignments_summary(data=None):
     
     return assignments_summary
 
+# Get a long format (for the bottom of email)
 def get_assignments_longform(data=None):
     assignments_longform = []
     for x in data:
@@ -45,11 +77,16 @@ def get_assignments_longform(data=None):
 def get_ar_points():
     r1 = requests.post(ar_login_url,data=ar_login_data,allow_redirects=False)
     r2 = requests.post(ar_lp_url,cookies=r1.cookies)
-    print(r2.text)
+    parser = ArHTMLParser()
+    parser.feed(r2.text)
+    return parser.data
 
-x = get_assignments()
+""" x = get_assignments()
 for j in get_assignments_summary(x):
     print(j)
 
 for k in get_assignments_longform(x):
     print(k)
+ """
+
+print("AR Points: {}".format(get_ar_points()))
