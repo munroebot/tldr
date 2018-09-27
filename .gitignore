@@ -4,3 +4,5 @@ lib
 pip-selfcheck.json
 pyvenv.cfg
 .vscode
+local_config.py
+*.pyc
