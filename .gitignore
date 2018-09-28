@@ -7,3 +7,4 @@ pyvenv.cfg
 local_config.py
 *.pyc
 .DS_Store
+Scripts
