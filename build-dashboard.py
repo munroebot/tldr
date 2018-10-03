@@ -81,11 +81,13 @@ def get_ar_points():
     parser.feed(r2.text)
     return parser.data
 
-# print("AR Points: {}".format(get_ar_points()))
+print("\nAR Points: {}\n\n".format(get_ar_points()))
 
 x = get_assignments()
 for j in get_assignments_summary(x):
     print(j)
 
+"""
 for k in get_assignments_longform(x):
     print(k)
+"""
