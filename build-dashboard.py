@@ -4,6 +4,8 @@ from datetime import datetime, date
 from html.parser import HTMLParser
 from botocore.exceptions import ClientError
 
+from local_config import *
+
 pp_username = os.environ['PP_USERNAME']
 pp_password = os.environ['PP_PASSWORD']
 ar_username = os.environ['AR_USERNAME']
@@ -41,7 +43,7 @@ class ArHTMLParser(HTMLParser):
 
 # Get Plus Portals Assignments
 def get_assignments():
-
+    pp_login_data = {'UserName':pp_username,'Password':pp_password}
     r = requests.post(pp_login_url, data=pp_login_data, allow_redirects=False)
     r2 = requests.get(pp_assignments_url,cookies=r.cookies)
     x = json.loads(r2.text)
@@ -59,22 +61,26 @@ def get_assignments():
 
 # Get a short summary (for top of email)
 def get_assignments_summary(data=None):
-    assignments_summary = []
+    assignments_summary = ""
     for x in data:
-        assignments_summary.append("{} - {}".format(x["DueDate"],x["Title"]))
+        assignments_summary += ("{} - {}".format(x["DueDate"],x["Title"]))
 
     return assignments_summary
 
 # Get a long format (for the bottom of email)
 def get_assignments_longform(data=None):
-    assignments_longform = []
+    assignments_longform = ""
     for x in data:
-        assignments_longform.append("{}\n{}\n{}\n\n".format(x["DueDate"], x["Title"], x["Description"]))
+        assignments_longform += ("{}\n{}\n{}\n\n".format(x["DueDate"], x["Title"], x["Description"]))
 
     return assignments_longform
 
 # Grab AR Points
 def get_ar_points():
+
+    ar_login_data['mBox_Login$mTextBox_UserName']=ar_username
+    ar_login_data['mBox_Login$mTextBox_Password']=ar_password
+
     r1 = requests.post(ar_login_url,data=ar_login_data,allow_redirects=False)
     r2 = requests.post(ar_lp_url,cookies=r1.cookies)
     parser = ArHTMLParser()
@@ -86,7 +92,7 @@ def say_hello():
 
 def lambda_handler(event, context):
     
-    # x = get_assignments()
+    x = get_assignments()
     # get_assignments_summary(x)
     # get_assignments_longform(x)
     # print("\nAR Points: {}\n\n".format(get_ar_points()))
@@ -96,11 +102,44 @@ def lambda_handler(event, context):
     CHARSET = "UTF-8"
     SUBJECT = "LVDS - Plus Portals Daily Reminder"
     
-    BODY_TEXT = ("Hi")
-    BODY_HTML = """
-    <HTML><H1>hello</H1></HTML>
+    BODY_TEXT = """
+    LVDS Daily Summary
+    ------------------
+    
+    AR Points: {}
 
-    """
+    Homework Summary:
+    =================
+    {}
+
+    Homework Long Description:
+    ==========================
+    {}
+
+    """.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
+    
+    BODY_HTML = """
+    <html>
+    <head><title></title></head>
+    <body></body>
+    <pre>
+    LVDS Daily Summary
+    ------------------
+    
+    AR Points: {}
+
+    Homework Summary:
+    =================
+    {}
+
+    Homework Long Description:
+    ==========================
+    {}
+
+    </pre>
+    </body>
+    </html>
+    """.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
     
     client = boto3.client('ses',region_name=AWS_REGION)
     
@@ -117,7 +156,7 @@ def lambda_handler(event, context):
                 },
                 'Text': {
                     'Charset': CHARSET,
-                    'Data': BODY_TEXT,
+                    'Data': (BODY_TEXT),
                 },
             },
             'Subject': {
