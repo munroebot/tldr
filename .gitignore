@@ -8,3 +8,5 @@ local_config.py
 *.pyc
 .DS_Store
 Scripts
+*.zip
+secrets.bash

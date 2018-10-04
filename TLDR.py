@@ -63,7 +63,7 @@ def get_assignments():
 def get_assignments_summary(data=None):
     assignments_summary = ""
     for x in data:
-        assignments_summary += ("{} - {}".format(x["DueDate"],x["Title"]))
+        assignments_summary += ("{} - {}\n".format(x["DueDate"],x["Title"]))
 
     return assignments_summary
 
@@ -87,15 +87,9 @@ def get_ar_points():
     parser.feed(r2.text)
     return parser.data
 
-def say_hello():
-    return pp_username
-
 def lambda_handler(event, context):
     
     x = get_assignments()
-    # get_assignments_summary(x)
-    # get_assignments_longform(x)
-    # print("\nAR Points: {}\n\n".format(get_ar_points()))
     
     SENDER = os.environ['SENDER']
     AWS_REGION = "us-east-1"
@@ -103,43 +97,47 @@ def lambda_handler(event, context):
     SUBJECT = "LVDS - Plus Portals Daily Reminder"
     
     BODY_TEXT = """
-    LVDS Daily Summary
-    ------------------
+LVDS Daily Summary
+------------------
     
-    AR Points: {}
+AR Points: {}
 
-    Homework Summary:
-    =================
-    {}
+Homework Summary:
+=================
+{}
 
-    Homework Long Description:
-    ==========================
-    {}
-
+Homework Long Description:
+==========================
+{}
     """.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
     
     BODY_HTML = """
-    <html>
-    <head><title></title></head>
-    <body></body>
-    <pre>
-    LVDS Daily Summary
-    ------------------
-    
-    AR Points: {}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>LVDS Daily Summary</title>
 
-    Homework Summary:
-    =================
-    {}
+<style type="text/css">
+    h4 {{ padding-bottom: 0px; margin-bottom: 0px; border-bottom: 3px solid #A9A9A9; }}
+    pre {{ padding-top: 5px; margin-top: 0px; }}
+</style>
 
-    Homework Long Description:
-    ==========================
-    {}
+</head>
+<body>
+<h3>LVDS Daily Summary</h3>
 
-    </pre>
-    </body>
-    </html>
-    """.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
+<h4>AR Points:</h4>
+<pre>{}</pre>
+
+<h4>Homework (Summary):</h4>
+<pre>{}</pre>
+
+<h4>Homework (Long Description):</h4>
+<pre>{}</pre>
+
+</body>
+</html>
+""".format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
     
     client = boto3.client('ses',region_name=AWS_REGION)
     
