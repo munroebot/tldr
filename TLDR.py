@@ -64,7 +64,10 @@ def get_assignments():
 def get_assignments_summary(data=None):
     assignments_summary = ""
     for x in data:
-        assignments_summary += ("{} - {}\n".format(x["DueDate"],x["Title"]))
+        if ("test"in x["Title"] or "Test" in x["Title"]):
+            assignments_summary += ("<span style=\"background:#eee\">{} - {}</span>\n".format(x["DueDate"],x["Title"]))
+        else:
+            assignments_summary += ("{} - {}\n".format(x["DueDate"],x["Title"]))
 
     return assignments_summary
 
@@ -93,8 +96,8 @@ def lambda_handler(event, context):
     x = get_assignments()
     
     SENDER = os.environ['SENDER']   
-    BODY_TEXT.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
-    BODY_HTML.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
+    bt = BODY_TEXT.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
+    bh = BODY_HTML.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
     
     client = boto3.client('ses',region_name=SES_REGION)
     
@@ -107,11 +110,11 @@ def lambda_handler(event, context):
             'Body': {
                 'Html': {
                     'Charset': SES_CHARSET,
-                    'Data': BODY_HTML,
+                    'Data': bh,
                 },
                 'Text': {
                     'Charset': SES_CHARSET,
-                    'Data': (BODY_TEXT),
+                    'Data': (bt),
                 },
             },
             'Subject': {
