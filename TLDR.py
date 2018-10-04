@@ -5,12 +5,13 @@ from html.parser import HTMLParser
 from botocore.exceptions import ClientError
 
 from local_config import *
+from email_templates import BODY_TEXT, BODY_HTML
 
-pp_username = os.environ['PP_USERNAME']
-pp_password = os.environ['PP_PASSWORD']
-ar_username = os.environ['AR_USERNAME']
-ar_password = os.environ['AR_PASSWORD']
-recipients = os.environ['RECIPIENTS'].split(";")
+PP_USERNAME = os.environ['PP_USERNAME']
+PP_PASSWORD = os.environ['PP_PASSWORD']
+AR_USERNAME = os.environ['AR_USERNAME']
+AR_PASSWORD = os.environ['AR_PASSWORD']
+RECIPIENTS = os.environ['RECIPIENTS'].split(";")
 
 class ArHTMLParser(HTMLParser):
     def __init__(self):
@@ -43,9 +44,9 @@ class ArHTMLParser(HTMLParser):
 
 # Get Plus Portals Assignments
 def get_assignments():
-    pp_login_data = {'UserName':pp_username,'Password':pp_password}
-    r = requests.post(pp_login_url, data=pp_login_data, allow_redirects=False)
-    r2 = requests.get(pp_assignments_url,cookies=r.cookies)
+    PP_LOGIN_DATA = {'UserName':PP_USERNAME,'Password':PP_PASSWORD}
+    r = requests.post(PP_LOGIN_URL, data=PP_LOGIN_DATA, allow_redirects=False)
+    r2 = requests.get(PP_ASSIGNMENTS_URL,cookies=r.cookies)
     x = json.loads(r2.text)
 
     d0 = date.today()
@@ -78,11 +79,11 @@ def get_assignments_longform(data=None):
 # Grab AR Points
 def get_ar_points():
 
-    ar_login_data['mBox_Login$mTextBox_UserName']=ar_username
-    ar_login_data['mBox_Login$mTextBox_Password']=ar_password
+    AR_LOGIN_DATA['mBox_Login$mTextBox_UserName']=AR_USERNAME
+    AR_LOGIN_DATA['mBox_Login$mTextBox_Password']=AR_PASSWORD
 
-    r1 = requests.post(ar_login_url,data=ar_login_data,allow_redirects=False)
-    r2 = requests.post(ar_lp_url,cookies=r1.cookies)
+    r1 = requests.post(AR_LOGIN_URL,data=AR_LOGIN_DATA,allow_redirects=False)
+    r2 = requests.post(AR_LP_URL,cookies=r1.cookies)
     parser = ArHTMLParser()
     parser.feed(r2.text)
     return parser.data
@@ -91,60 +92,16 @@ def lambda_handler(event, context):
     
     x = get_assignments()
     
-    SENDER = os.environ['SENDER']
-    AWS_REGION = "us-east-1"
-    CHARSET = "UTF-8"
-    SUBJECT = "LVDS - Plus Portals Daily Reminder"
-    
-    BODY_TEXT = """
-LVDS Daily Summary
-------------------
-    
-AR Points: {}
-
-Homework Summary:
-=================
-{}
-
-Homework Long Description:
-==========================
-{}
-    """.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
-    
-    BODY_HTML = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<title>LVDS Daily Summary</title>
-
-<style type="text/css">
-    h4 {{ padding-bottom: 0px; margin-bottom: 0px; border-bottom: 3px solid #A9A9A9; }}
-    pre {{ padding-top: 5px; margin-top: 0px; }}
-</style>
-
-</head>
-<body>
-<h3>LVDS Daily Summary</h3>
-
-<h4>AR Points:</h4>
-<pre>{}</pre>
-
-<h4>Homework (Summary):</h4>
-<pre>{}</pre>
-
-<h4>Homework (Long Description):</h4>
-<pre>{}</pre>
-
-</body>
-</html>
-""".format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
+    SENDER = os.environ['SENDER']   
+    BODY_TEXT.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
+    BODY_HTML.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
     
     client = boto3.client('ses',region_name=AWS_REGION)
     
     try:
         response = client.send_email(
         Destination={
-            'ToAddresses': recipients,
+            'ToAddresses': RECIPIENTS,
         },
         Message={
             'Body': {
