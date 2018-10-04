@@ -1,15 +1,14 @@
-import requests, json, os
+import requests, json, os, boto3
+
 from datetime import datetime, date
 from html.parser import HTMLParser
+from botocore.exceptions import ClientError
 
-from local_config import *
-
-"""
 pp_username = os.environ['PP_USERNAME']
 pp_password = os.environ['PP_PASSWORD']
 ar_username = os.environ['AR_USERNAME']
-ar_username = os.environ['AR_PASSWORD']
-"""
+ar_password = os.environ['AR_PASSWORD']
+recipients = os.environ['RECIPIENTS'].split(";")
 
 class ArHTMLParser(HTMLParser):
     def __init__(self):
@@ -28,7 +27,7 @@ class ArHTMLParser(HTMLParser):
                 break
             else:
                 return
-        
+
         self.recording = 1
 
     def handle_endtag(self, tag):
@@ -39,9 +38,10 @@ class ArHTMLParser(HTMLParser):
         if self.recording:
             self.data = data
 
+
 # Get Plus Portals Assignments
 def get_assignments():
-    
+
     r = requests.post(pp_login_url, data=pp_login_data, allow_redirects=False)
     r2 = requests.get(pp_assignments_url,cookies=r.cookies)
     x = json.loads(r2.text)
@@ -54,7 +54,7 @@ def get_assignments():
         d1 = datetime.strptime(j['DueDate'], '%m-%d-%Y').date()
         if d1 >= d0:
             assignments.append(j)
-    
+
     return assignments
 
 # Get a short summary (for top of email)
@@ -62,7 +62,7 @@ def get_assignments_summary(data=None):
     assignments_summary = []
     for x in data:
         assignments_summary.append("{} - {}".format(x["DueDate"],x["Title"]))
-    
+
     return assignments_summary
 
 # Get a long format (for the bottom of email)
@@ -81,13 +81,55 @@ def get_ar_points():
     parser.feed(r2.text)
     return parser.data
 
-print("\nAR Points: {}\n\n".format(get_ar_points()))
+def say_hello():
+    return pp_username
 
-x = get_assignments()
-for j in get_assignments_summary(x):
-    print(j)
+def lambda_handler(event, context):
+    
+    # x = get_assignments()
+    # get_assignments_summary(x)
+    # get_assignments_longform(x)
+    # print("\nAR Points: {}\n\n".format(get_ar_points()))
+    
+    SENDER = os.environ['SENDER']
+    AWS_REGION = "us-east-1"
+    CHARSET = "UTF-8"
+    SUBJECT = "LVDS - Plus Portals Daily Reminder"
+    
+    BODY_TEXT = ("Hi")
+    BODY_HTML = """
+    <HTML><H1>hello</H1></HTML>
 
-"""
-for k in get_assignments_longform(x):
-    print(k)
-"""
+    """
+    
+    client = boto3.client('ses',region_name=AWS_REGION)
+    
+    try:
+        response = client.send_email(
+        Destination={
+            'ToAddresses': recipients,
+        },
+        Message={
+            'Body': {
+                'Html': {
+                    'Charset': CHARSET,
+                    'Data': BODY_HTML,
+                },
+                'Text': {
+                    'Charset': CHARSET,
+                    'Data': BODY_TEXT,
+                },
+            },
+            'Subject': {
+                'Charset': CHARSET,
+                'Data': SUBJECT,
+            },
+        },
+        Source=SENDER,
+    )
+    # Display an error if something goes wrong.	
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+    else:
+        print("Email sent! Message ID:"),
+        print(response['MessageId'])
