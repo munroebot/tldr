@@ -26,7 +26,7 @@ BODY_HTML = """
 </html>
 """
 
-    BODY_TEXT = """
+BODY_TEXT = """
 LVDS Daily Summary
 ------------------
     

@@ -96,7 +96,7 @@ def lambda_handler(event, context):
     BODY_TEXT.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
     BODY_HTML.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
     
-    client = boto3.client('ses',region_name=AWS_REGION)
+    client = boto3.client('ses',region_name=SES_REGION)
     
     try:
         response = client.send_email(
@@ -106,17 +106,17 @@ def lambda_handler(event, context):
         Message={
             'Body': {
                 'Html': {
-                    'Charset': CHARSET,
+                    'Charset': SES_CHARSET,
                     'Data': BODY_HTML,
                 },
                 'Text': {
-                    'Charset': CHARSET,
+                    'Charset': SES_CHARSET,
                     'Data': (BODY_TEXT),
                 },
             },
             'Subject': {
-                'Charset': CHARSET,
-                'Data': SUBJECT,
+                'Charset': SES_CHARSET,
+                'Data': SES_SUBJECT,
             },
         },
         Source=SENDER,
