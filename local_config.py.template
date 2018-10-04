@@ -1,0 +1,20 @@
+
+## Plus Portals Settings
+PP_LOGIN_URL=''
+PP_ASSIGNMENTS_URL=''
+
+## Accelerated Reader Settings
+AR_LOGIN_URL = ''
+AR_LP_URL=''
+
+AR_LOGIN_DATA = {}
+AR_LOGIN_DATA['__VIEWSTATE']=''
+AR_LOGIN_DATA['__EVENTVALIDATION']=''
+AR_LOGIN_DATA['mBox_Login$mButton_LogIn']='Log In'
+AR_LOGIN_DATA['__EVENTTARGET']=''
+AR_LOGIN_DATA['__EVENTARGUMENT']=''
+
+## AWS SES Settings
+SES_REGION = ""
+SES_CHARSET = ""
+SES_SUBJECT = ""
