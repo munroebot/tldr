@@ -12,6 +12,7 @@ PP_PASSWORD = os.environ['PP_PASSWORD']
 AR_USERNAME = os.environ['AR_USERNAME']
 AR_PASSWORD = os.environ['AR_PASSWORD']
 RECIPIENTS = os.environ['RECIPIENTS'].split(";")
+INCLUDE_AR = os.environ["INCLUDE_AR"]
 
 class ArHTMLParser(HTMLParser):
     def __init__(self):
@@ -44,6 +45,7 @@ class ArHTMLParser(HTMLParser):
 
 # Get Plus Portals Assignments
 def get_assignments():
+
     PP_LOGIN_DATA = {'UserName':PP_USERNAME,'Password':PP_PASSWORD}
     r = requests.post(PP_LOGIN_URL, data=PP_LOGIN_DATA, allow_redirects=False)
     r2 = requests.get(PP_ASSIGNMENTS_URL,cookies=r.cookies)
@@ -61,19 +63,28 @@ def get_assignments():
     return assignments
 
 # Get a short summary (for top of email)
-def get_assignments_summary(data=None):
+def get_assignments_summary(data=None, html=False):
+
     assignments_summary = ""
+    d0 = date.today()
+
     for x in data:
-        if ("test"in x["Title"] or "Test" in x["Title"]):
-            assignments_summary += ("<span style=\"background:#eee\">{} - {}</span>\n".format(x["DueDate"],x["Title"]))
+        d1 = datetime.strptime(x['DueDate'], '%m-%d-%Y').date()
+
+        if (d1 == d0):
+            if (html):
+                assignments_summary += ("<span style=\"background:#eee;\">{} - {}</span>\n".format(x["DueDate"],x["Title"]))
         else:
             assignments_summary += ("{} - {}\n".format(x["DueDate"],x["Title"]))
 
     return assignments_summary
 
+
 # Get a long format (for the bottom of email)
 def get_assignments_longform(data=None):
+
     assignments_longform = ""
+
     for x in data:
         assignments_longform += ("{}\n{}\n{}\n\n".format(x["DueDate"], x["Title"], x["Description"]))
 
@@ -93,11 +104,15 @@ def get_ar_points():
 
 def lambda_handler(event, context):
     
+    ar_points = "N/A"
+    if (INCLUDE_AR == "True"):
+        ar_points = get_ar_points()
+    
     x = get_assignments()
     
     SENDER = os.environ['SENDER']   
-    bt = BODY_TEXT.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
-    bh = BODY_HTML.format(get_ar_points(),get_assignments_summary(x),get_assignments_longform(x))
+    bt = BODY_TEXT.format(ar_points,get_assignments_summary(x),get_assignments_longform(x))
+    bh = BODY_HTML.format(ar_points,get_assignments_summary(x,html=True),get_assignments_longform(x))
     
     client = boto3.client('ses',region_name=SES_REGION)
     
@@ -128,5 +143,4 @@ def lambda_handler(event, context):
     except ClientError as e:
         print(e.response['Error']['Message'])
     else:
-        print("Email sent! Message ID:"),
-        print(response['MessageId'])
+        print("Email sent - Message ID: {}".format(response['MessageId']))
