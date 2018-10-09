@@ -13,6 +13,7 @@ AR_USERNAME = os.environ['AR_USERNAME']
 AR_PASSWORD = os.environ['AR_PASSWORD']
 RECIPIENTS = os.environ['RECIPIENTS'].split(";")
 INCLUDE_AR = os.environ["INCLUDE_AR"]
+SES_SUBJECT = os.environ["SES_SUBJECT"]
 
 class ArHTMLParser(HTMLParser):
     def __init__(self):
