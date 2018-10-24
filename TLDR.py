@@ -43,7 +43,6 @@ class ArHTMLParser(HTMLParser):
         if self.recording:
             self.data = data
 
-
 # Get Plus Portals Assignments
 def get_assignments():
 
@@ -79,7 +78,6 @@ def get_assignments_summary(data=None, html=False):
             assignments_summary += ("{} - {}\n".format(x["DueDate"],x["Title"]))
 
     return assignments_summary
-
 
 # Get a long format (for the bottom of email)
 def get_assignments_longform(data=None):
