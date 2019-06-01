@@ -74,8 +74,8 @@ def get_assignments_summary(data=None, html=False):
         if (d1 == d0):
             if (html):
                 assignments_summary += ("<span style=\"background:#eee;\">{} - {}</span>\n".format(x["DueDate"],x["Title"]))
-        else:
-            assignments_summary += ("{} - {}\n".format(x["DueDate"],x["Title"]))
+            else:
+                assignments_summary += ("{} - {}\n".format(x["DueDate"],x["Title"]))
 
     return assignments_summary
 
